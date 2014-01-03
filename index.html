@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="ig" fade-on-exit>
+<head>
+	<title>I've got... - Fun and facts for those spare sixty seconds</title>
+	<link rel="stylesheet" href="css/ig.css">
+	<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+</head>
+<body ng-controller="Ig">
+
+	<div class="pane">
+		<div class="time">
+			<h2>I've got...</h2>
+			<ul>
+				<li><div class="time" ng-click="chooseTime('1')" ng-class="{ active: time == '1'}">
+					<div>1</div> <span>minute</span>
+				</div></li>
+				<li><div class="time" ng-click="chooseTime('5')" ng-class="{ active: time == '5'}">
+					<div>5</div> <span>minutes</span>
+				</div></li>
+				<li><div class="time" ng-click="chooseTime('15')" ng-class="{ active: time == '15'}">
+					<div>15</div> <span>minutes</span>
+				</div></li>
+				<li>
+					<div class="time" ng-click="chooseTime('+')" ng-class="{ active: time == '+'}">
+						<div><i class="fa fa-clock-o"></i></div>
+						<span>Longer</span>
+					</div>
+				</li>
+			</ul>
+		</div>
+
+		<div class="genre genreHide" ng-class="{ genreHide: !aTimeChosen }">
+			<h2>Give me...</h2>
+			<ul>
+				<li>
+					<div class="genre" ng-click="chooseGenre('fun')" ng-class="{ active: genre == 'fun'}">
+						<div><i class="fa fa-certificate"></i></div>
+						<span>Fun</span>
+					</div>
+				</li>
+				<li>
+					<div class="genre" ng-click="chooseGenre('news')" ng-class="{ active: genre == 'news'}">
+						<div><i class="fa fa-calendar"></i></div>
+						<span>News</span>
+					</div>
+				</li>
+				<li>
+					<div class="genre" ng-click="chooseGenre('factual')" ng-class="{ active: genre == 'factual'}">
+						<div><i class="fa fa-book"></i></div>
+						<span>Factual</span>
+					</div>
+				</li>
+				<li>
+					<div class="genre" ng-click="chooseGenre('random')" ng-class="{ active: genre == 'random'}">
+						<div><i class="fa fa-random"></i></div>
+						<span>Random</span>
+					</div>
+				</li>
+			</ul>
+		</div>
+		
+		<div class="signin signinHide" ng-class="{ signinHide: !aGenreChosen }">
+			<div ng-show="!hideSignin">
+				<span id="signin"></span> <span class="text">to get better recommendations</span>
+			</div>
+			<div ng-show="hideSignin && user" class="signedin">
+				{{user.name.givenName}}, you're getting personal recommendations. <i class="fa fa-check"></i>
+			</div>
+		</div>
+
+		<div class="suggestion ng-hide" ng-show="suggestionState != 'none'">
+			<div class="loading" ng-show="suggestionState == 'loading'">
+				<i class="bigicon fa fa-spinner fa-spin"></i>
+				<p>Thinking...</p>
+			</div>
+			<div class="error" ng-show="suggestionState == 'error'">
+				<i class="bigicon fa fa-frown-o"></i>
+				<p>Sorry, something went terribly wrong. <a href="" ng-click="getSuggestion()">Again?</a></p>
+			</div>
+			<div class="done" ng-show="suggestionState == 'done'">
+				<div class="suggestionContent" ng-click="go()">
+					<div class="image" ng-style="{ 'background-image': 'url(' + suggestion.image + ')' }" ng-show="suggestion.image"></div>
+					<div class="content" ng-class="{ noImage: !suggestion.image }">
+						<div>
+							<h2>{{suggestion.title}}</h2>
+							<p>{{suggestion.summary}}</p>
+						</div>
+					</div>
+				</div>
+				<div class="info">
+					<ul>
+						<li><div>{{getReadTime(suggestion.time)}} long</div></li>
+						<li><div>from {{getDate(suggestion.published)}}</div></li>
+					</ul>
+				</div>
+			</div>
+			<div class="review" ng-show="suggestionState == 'review'">
+				<div class="dislike" ng-click="dislike()"><div><i class="fa fa-thumbs-o-down"></i><p>Less</p></div></div>
+				<div class="content">
+					<h2>What did you think of this?</h2>
+					<p>{{suggestion.title}}</p>
+				</div>
+				<div class="like" ng-click="like()"><div><i class="fa fa-thumbs-o-up"></i><p>More</p></div></div>
+			</div>
+		</div>
+		<p class="suggestion-skip ng-hide" ng-show="suggestionState == 'done'" ng-click="reject()">Skip this one</p>
+		<p class="suggestion-skip ng-hide" ng-show="suggestionState == 'review'" ng-click="getSuggestion()">Show me something new</p>
+		<p class="hint ng-hide" ng-show="(!time || !genre) && (aTimeChosen && aGenreChosen)">Select one from both rows of options</p>
+	</div>
+
+	<script>
+		(function(){
+			var t,i,e,n=window,o=document,a=arguments,s="script",r=["config","track","identify","visit","push","call"],c=function(){var t,i=this;for(i._e=[],t=0;r.length>t;t++)(function(t){i[t]=function(){return i._e.push([t].concat(Array.prototype.slice.call(arguments,0))),i}})(r[t])};for(n._w=n._w||{},t=0;a.length>t;t++)n._w[a[t]]=n[a[t]]=n[a[t]]||new c;i=o.createElement(s),i.async=1,i.src="//static.woopra.com/js/w.js",e=o.getElementsByTagName(s)[0],e.parentNode.insertBefore(i,e)
+		})("woopra");
+		woopra.config({
+			domain: "ivegot.chris-alexander.co.uk",
+			download_tracking: false,
+			outgoing_tracking: false,
+			download_pause: 0,
+			outgoing_pause: 0
+		});
+		woopra.track();
+	</script>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.6/angular.min.js"></script>
+	<script src="js/gclient.js"></script>
+	<script src="https://apis.google.com/js/client:plusone.js?onload=googleLoaded"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.0/webfont.js"></script>
+	<script src="js/fonts.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.4.0/moment.min.js"></script>
+	<script src="js/ig.js"></script>
+	<script src="js/services/arg2arr.js"></script>
+	<script src="js/services/console.js"></script>
+	<script src="js/services/chill.js"></script>
+	<script src="js/services/config.js"></script>
+	<script src="js/services/track.js"></script>
+	<script src="js/services/google.js"></script>
+	<script src="js/services/auth.js"></script>
+	<script src="js/services/drive.js"></script>
+	<script src="js/services/fusiontables.js"></script>
+	<script src="js/services/wordcloud.js"></script>
+	<script src="js/services/articles.js"></script>
+	<script src="js/services/keywords.js"></script>
+	<script src="js/services/suggestion.js"></script>
+	<script src="js/services/tags.js"></script>
+	<script src="js/services/retriever.js"></script>
+	<script src="js/services/retrievers/plus.js"></script>
+	<script src="js/services/retrievers/youtube.js"></script>
+	<script src="js/directives/fadeOnExit.js"></script>
+	<script src="js/controllers/ig.js"></script>
+</body>
+</html>

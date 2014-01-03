@@ -1,0 +1,312 @@
+/* Font loading */
+html,
+html.hide {
+	opacity: 0;
+	transition: opacity 0.5s linear;
+}
+.wf-active {
+	opacity: 1;
+	transition: opacity 0.2s linear;
+}
+
+/* Resets */
+html, body {
+	margin: 0;
+	padding: 0;
+	-webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+}
+
+a,
+a:hover,
+a:active,
+a:link,
+a:visited {
+	color: #000;
+	text-decoration: none;
+}
+
+/* Font styles */
+body {
+	font-family: "Exo 2", sans-serif;
+	font-weight: 200;
+	text-align: center;
+}
+
+
+h1, h2, h3, h4, h5, h6 {
+	font-weight: 500;
+}
+
+/* Page formatting */
+.pane {
+	margin: 0 auto;
+	max-width: 550px;
+	padding-top: 10px;
+}
+
+.time h2 {
+	margin-top: 0;
+}
+
+.time h2,
+.genre h2 {
+	margin: 10px 0 0;
+	height: 45px;
+	overflow: hidden;
+	transition: height 0.5s ease-in-out;
+}
+
+.time h2.transition,
+.genre h2.transition {
+	height: 0;
+	transition: height 0.5s ease-in-out;
+}
+
+.time ul,
+.genre ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+}
+
+.genre {
+	opacity: 1;
+}
+.genre.genreHide {
+	opacity: 0;
+	transition: opacity 0.2s linear;
+}
+
+.time ul li,
+.genre ul li {
+	display: inline-block;
+	width: 22%;
+	padding: 0 1%;
+}
+
+.time ul li .time,
+.genre ul li .genre {
+	max-width: 85px;
+	min-width: 65px;
+	margin: 0 auto;
+	height: 75px;
+	overflow: hidden;
+	border: 1px solid #ccc;
+	border-radius: 2px;
+	cursor: pointer;
+	transition: border 0.2s linear, height 0.5s ease-in-out;
+}
+
+.time ul li .time.active,
+.genre ul li .genre.active {
+	border-color: #FF0066;
+	transition: border 0.1s linear, height 0.5s ease-in-out;
+}
+
+.time ul li .time > *,
+.genre ul li .genre > * {
+	opacity: 1;
+	transition: opacity 0.2s ease-in;
+}
+
+.time ul li .time.transition,
+.genre ul li .genre.transition {
+	height: 30px;
+	transition: border 0.2s linear, height 0.5s ease-in-out;
+}
+
+.time ul li .time.transitioning > *,
+.genre ul li .genre.transitioning > * {
+	opacity: 0;
+	transition: opacity 0.2s ease-out;
+}
+
+.time ul li .time.transition > div,
+.genre ul li .genre.transition > div {
+	display: inline;
+	line-height: 27px;
+	font-size: 16px;
+	margin-right: 3px;
+}
+
+.time ul li .time.transition > span,
+.genre ul li .genre.transition > span {
+	font-size: 15px;
+}
+
+li .time > div,
+li .genre > div {
+	font-size: 30px;
+	font-weight: 500;
+	line-height: 45px;
+}
+
+/* Sign in button */
+.signin {
+	margin: 20px auto;
+	opacity: 1;
+	text-align: center
+}
+.signin.signinHide {
+	opacity: 0;
+	transition: opacity 0.2s linear;
+}
+
+.signin .signedin {
+	width: 80%;
+	margin: 0 auto;
+}
+
+.signin .text {
+	position: relative;
+	top: -15px;
+}
+
+.signin.notNeeded {
+	position: absolute;
+	left: -99999px;
+}
+
+/* Suggestions */
+.suggestion {
+	width: 80%;
+	margin: 20px auto 0;
+	border: 1px solid #ccc;
+	border-radius: 2px;
+}
+
+.suggestion .loading,
+.suggestion .error {
+	padding: 10px;
+}
+
+.suggestion i.fa.bigicon {
+	font-size: 60px;
+}
+
+.suggestion .done .suggestionContent {
+	text-align: left;
+	position: relative;
+	border-bottom: 1px solid #ccc;
+	height: 150px;
+}
+
+.suggestionContent {
+	cursor: pointer;
+}
+
+.suggestionContent h2 {
+	font-size: 16px;
+	margin-top: 0;
+}
+
+.suggestionContent .image {
+	width: 35%;
+	height: 150px;
+	background-size: cover;
+	background-position: center center;
+	float: left;
+}
+
+.suggestionContent .content {
+	width: 65%;
+	float: left;
+}
+
+.suggestionContent .content.noImage {
+	width: 100%;
+}
+.suggestionContent .content.noImage > div {
+	border-left-width: 0;
+}
+
+.suggestionContent .content > div {
+	padding: 10px;
+	height: 130px;
+	overflow: auto;
+	border-left: 1px solid #ccc;
+}
+
+.suggestion .done .info ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
+	width: 100%
+}
+
+.suggestion .done .info ul li {
+	width: 49%;
+	display: inline-block;
+	text-align: left;
+}
+
+.suggestion .done .info ul li:last-child {
+	text-align: right;
+}
+
+.suggestion .done .info ul li > div {
+	padding: 2px 5px 5px;
+}
+
+.suggestion .review {
+	height: 150px;
+}
+
+.suggestion .review .like,
+.suggestion .review .dislike {
+	float: left;
+	width: 25%;
+	height: 150px;
+	cursor: pointer;
+}
+
+.suggestion .review i.fa {
+	line-height: 80px;
+	margin-top: 15px;
+	font-size: 75px;
+}
+
+.suggestion .review .like > div,
+.suggestion .review .dislike > div {
+	height: 150px;
+	width: 100%;
+}
+
+.suggestion .review .like > div {
+	border-left: 1px solid #ccc;
+	background-color: #75eb9a;
+}
+
+.suggestion .review .dislike > div {
+	border-right: 1px solid #ccc;
+	background-color: #fa534d;
+}
+
+.suggestion .review .content {
+	width: 50%;
+	float: left;
+	height: 150px;
+	overflow: auto;
+}
+
+.suggestion .review .content > * {
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+.suggestion .review .content h2 {
+	font-size: 16px;
+	margin-top: 0;
+}
+
+.suggestion-skip {
+	font-size: 12px;
+	padding: 3px 5px 5px;
+	margin-top: 0;
+	cursor: pointer;
+}
+
+/* Hints */
+.hint {
+	font-weight: 500;
+}

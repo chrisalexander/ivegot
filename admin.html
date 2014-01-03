@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="ig" fade-on-exit>
+<head>
+	<title>Admin panel</title>
+	<link rel="stylesheet" href="css/ig.css">
+	<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+</head>
+<body ng-controller="Admin">
+
+	<div ng-show="showSignin" class="signin">
+		<span id="signin"></span> <span class="text">to access features</span>
+	</div>
+	<div ng-hide="showSignin">
+		Signed in to Google as {{user().displayName}}
+	</div>
+
+	<div ng-hide="ioUser">
+		<p>Provide a user ID and API key:</p>
+		<form>
+			<input type="text" ng-model="inputUserGuid">
+			<input type="text" ng-model="inputApiKey">
+			<button ng-click="submitApiKey(inputUserGuid, inputApiKey)">Check</button>
+		</form>
+	</div>
+	<div ng-show="ioUser">
+		Signed in to import.io as {{ioUser.username}}
+	</div>
+
+	<div ng-show="ioUser && !showSignin">
+		<p>Provide source GUID to analyse</p>
+		<form>
+			<input type="text" ng-model="inputGuid">
+			<button ng-click="submitSourceGuid(inputGuid)">Analyse</button>
+		</form>
+	</div>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.6/angular.min.js"></script>
+	<script src="js/gclient.js"></script>
+	<script src="https://apis.google.com/js/client:plusone.js?onload=googleLoaded"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.5.0/webfont.js"></script>
+	<script src="js/fonts.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.4.0/moment.min.js"></script>
+	<script src="js/ig.js"></script>
+	<script src="js/services/arg2arr.js"></script>
+	<script src="js/services/config.js"></script>
+	<script src="js/services/google.js"></script>
+	<script src="js/services/auth.js"></script>
+	<script src="js/services/track.js"></script>
+	<script src="js/services/fusiontables.js"></script>
+	<script src="js/services/wordcloud.js"></script>
+	<script src="js/services/articles.js"></script>
+	<script src="js/services/keywords.js"></script>
+	<script src="js/services/suggestion.js"></script>
+	<script src="js/services/tags.js"></script>
+	<script src="js/controllers/admin.js"></script>
+</body>
+</html>

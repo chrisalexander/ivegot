@@ -8,12 +8,16 @@ ig.factory("track", ["$window",
 			"avatar": avatar
 		}
 		console.log("Track user event", uObj);
-		$window.woopra.identify(uObj).push();
+		if ($window.woopra) {
+			$window.woopra.identify(uObj).push();
+		}
 	}
 
 	var trackEvent = function(name, details) {
 		console.log("Track custom event", name, details);
-		$window.woopra.track(name, details);
+		if ($window.woopra) {
+			$window.woopra.track(name, details);
+		}
 	}
 
 	return {

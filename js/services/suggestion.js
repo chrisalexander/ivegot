@@ -1,5 +1,15 @@
-ig.factory("suggestion", ["$q", "articles", "track", "wordcloud", "retriever", "keywords", "tags", "console",
-	function($q, articles, track, wordcloud, retriever, keywords, tags, console) {
+ig.factory("suggestion", ["$q", "articles", "track", "keywords", "tags", "console", "read", "skipped", "like",
+	function($q, articles, track, keywords, tags, console, read, skipped, like) {
+
+	var rankTagsForArticle = function(articleId, diffValue) {
+		return keywords.getByArticle([articleId]).then(function(data) {
+			var diff = {};
+			data.map(function(keyword) {
+				diff[keyword.keyword] = diffValue;
+			});
+			return tags.suggestions(diff);
+		});
+	}
 
 	return {
 		"suggest": function(inTime, inGenre) {
@@ -45,6 +55,26 @@ ig.factory("suggestion", ["$q", "articles", "track", "wordcloud", "retriever", "
 					suggestion._score = 0;
 					suggestionsById[suggestion._id] = suggestion;
 				});
+
+				var readState = read.isRead(Object.keys(suggestionsById));
+				var skippedState = skipped.isSkipped(Object.keys(suggestionsById));
+				var i = suggestions.length;
+				while (i--) {
+					var suggestion = suggestions[i];
+					if (readState.hasOwnProperty(suggestion._id) && readState[suggestion._id]) {
+						console.log("suggestion", "suggest", "Suggestion marked as read so removed", suggestion);
+						suggestions.splice(i, 1);
+						delete suggestionsById[suggestion._id];
+						continue;
+					}
+					if (skippedState.hasOwnProperty(suggestion._id) && skippedState[suggestion._id]) {
+						console.log("suggestion", "suggest", "Suggestion marked as skipped so removed", suggestion);
+						suggestions.splice(i, 1);
+						delete suggestionsById[suggestion._id];
+						continue;
+					}
+				}
+
 				console.log("suggestion", "suggest", "Getting articles with IDs", Object.keys(suggestionsById));
 				return keywords.getByArticle(Object.keys(suggestionsById));
 			}).then(function(keywords) {
@@ -92,15 +122,22 @@ ig.factory("suggestion", ["$q", "articles", "track", "wordcloud", "retriever", "
 		},
 		"markAsRead": function(id) {
 			track.event("read", id);
+			read.markAsRead(id);
 		},
 		"markAsSkipped": function(id) {
 			track.event("skip", id);
+			skipped.markAsSkipped(id);
+			rankTagsForArticle(id, -1);
 		},
 		"markAsLiked": function(id) {
 			track.event("like", id);
+			like.like(id);
+			rankTagsForArticle(id, 2);
 		},
 		"markAsDisliked": function(id) {
 			track.event("dislike", id);
+			like.dislike(id);
+			rankTagsForArticle(id, -2);
 		}
 	}
 

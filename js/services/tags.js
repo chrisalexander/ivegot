@@ -1,5 +1,5 @@
-ig.factory("tags", ["$rootScope", "$q", "drive", "auth", "wordcloud", "chill", "keyStore",
-	function($rootScope, $q, drive, auth, wordcloud, chill, keyStore) {
+ig.factory("tags", ["$rootScope", "keyStore",
+	function($rootScope, keyStore) {
 
 	var FILENAME = "tagcloud";
 

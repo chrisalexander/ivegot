@@ -1,59 +1,12 @@
-ig.factory("tags", ["$rootScope", "$q", "drive", "auth", "wordcloud", "chill",
-	function($rootScope, $q, drive, auth, wordcloud, chill) {
+ig.factory("tags", ["$rootScope", "$q", "drive", "auth", "wordcloud", "chill", "keyStore",
+	function($rootScope, $q, drive, auth, wordcloud, chill, keyStore) {
 
 	var FILENAME = "tagcloud";
 
-	// All-time tag score
-	var tags = {};
+	var store = keyStore(FILENAME, "integer");
 
-	// Tag count diffs of this session (if not synced to above)
-	var tagDiffs = {};
-
-	var resolveChill = chill("tags", "resolveDiffs", 15000, function() {
-		console.log("tags", "resolve", "Beginning resolution");
-		var future = $q.defer();
-		if (!auth.user()) {
-			console.error("tags", "resolve", "Resolve aborted as no user is available", auth.user());
-			future.reject("User is not authed");
-			return future.promise;
-		}
-		var handleNewTags = function() {
-			console.log("tags", "resolve", "Merging tags");
-			var deleted = [];
-			for (var k in tagDiffs) {
-				if (!tags.hasOwnProperty(k)) {
-					tags[k] = 0;
-				}
-				tags[k] += tagDiffs[k];
-				delete tagDiffs[k];
-				deleted.push(k);
-			}
-			console.log("tags", "resolve", "Merge complete, deleted tags", deleted);
-			drive.write(FILENAME, tags).then(function() {
-				console.log("tags", "resolve", "File saved successfully, current tag cloud is", tags);
-				future.resolve(tags);
-			}, function() {
-				console.log("tags", "resolve", "Write failed");
-				future.reject("Write failed");
-			});
-		}
-		console.log("tags", "resolve", "Beginning read");
-		drive.read(FILENAME).then(function(data) {
-			tags = data;
-			console.log("tags", "resolve", "Read complete, obtained data", tags);
-			handleNewTags();
-		}, function() {
-			console.log("tags", "resolve", "Read failed");
-			handleNewTags();
-		});
-		return future.promise;
-	});
-
-	var resolveDiffs = function(forced, patient) {
-		return resolveChill.out({ "force": forced, "patient": patient, "queue": false });
-	}
 	$rootScope.$on("signedIn", function() {
-		resolveDiffs(true);
+		store.resolve(true);
 	});
 
 	var getConfig = function(config) {
@@ -79,16 +32,8 @@ ig.factory("tags", ["$rootScope", "$q", "drive", "auth", "wordcloud", "chill",
 	var getTags = function(config) {
 		var config = getConfig(config);
 		
-		var allTags = {};
-		for (var k in tags) {
-			allTags[k] = tags[k];
-		}
-		for (var k in tagDiffs) {
-			if (!allTags.hasOwnProperty(k)) {
-				allTags[k] = 0;
-			}
-			allTags[k] += tagDiffs[k];
-		}
+		var allTags = store.getAll();
+
 		for (var k in allTags) {
 			if (
 				(k.length < config.minLength) ||
@@ -132,17 +77,9 @@ ig.factory("tags", ["$rootScope", "$q", "drive", "auth", "wordcloud", "chill",
 	var provideSuggestions = function(suggestions) {
 		console.log("tags", "provideSuggestions", "Suggestions received", suggestions);
 		for (var k in suggestions) {
-			if (!tagDiffs.hasOwnProperty(k)) {
-				tagDiffs[k] = 0;
-			}
-			tagDiffs[k] += suggestions[k];
+			store.increment(k, suggestions[k]);
 		}
-		console.log("tags", "provideSuggestions", "Suggestions absorbed", tagDiffs);
-		resolveDiffs(false, true).then(function() {
-			console.log("tags", "provideSuggestions", "Patient resolve has finished", arguments);
-		}, function() {
-			console.error("tags", "provideSuggestions", "Patient resolve has errored", arguments);
-		});
+		console.log("tags", "provideSuggestions", "Suggestions absorbed");
 	}
 
 	return {

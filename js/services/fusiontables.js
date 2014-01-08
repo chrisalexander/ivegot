@@ -46,7 +46,7 @@ ig.factory("fusionTables", ["$q", "$http", "google", "config",
 		return data;
 	}
 
-	var buildSelect = function(columns, table, whereConditions) {
+	var buildSelect = function(columns, table, whereConditions, order) {
 		var sql = "SELECT " + columns.join(", ") + " from " + table;
 		if (whereConditions && whereConditions.length) {
 			var wheres = [];
@@ -58,6 +58,9 @@ ig.factory("fusionTables", ["$q", "$http", "google", "config",
 				wheres.push(where.col + " " + where.op + " " + quote + where.val + quote);
 			});
 			sql += " WHERE " + wheres.join(" AND ");
+		}
+		if (order) {
+			sql += " ORDER BY " + order.col + " " + (order.direction ? order.direction : "");
 		}
 		return sql + ";";
 	}

@@ -35,7 +35,11 @@ ig.factory("articles", ["$q", "config", "arg2arr", "fusionTables",
 		if (type) {
 			conditions.push({ "col": "Type", "op": "=", "val": type });
 		}
-		return fusionTables.sql(fusionTables.buildSelect(columns, config.tables.articles, conditions)).then(function(data) {
+		var order = {
+			"col": "Published",
+			"direction": "DESC"
+		}
+		return fusionTables.sql(fusionTables.buildSelect(columns, config.tables.articles, conditions, order)).then(function(data) {
 			return fusionTables.mapRows(data.data);
 		});
 	}

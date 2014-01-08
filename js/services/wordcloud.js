@@ -1,31 +1,9 @@
-ig.service("wordcloud", ["arg2arr",
-	function(arg2arr) {
+ig.service("wordcloud", ["arg2arr", "textToWords",
+	function(arg2arr, textToWords) {
 
 	var MIN_WORD_LENGTH = 4;
-	
-	var textToWords = function(text) {
-		if (!text) {
-			return [];
-		}
-		// Lol normalise
-		return text.toLowerCase()
-			// HTML tags
-			.replace(/\<.+?\>/g, " ")
-			// Encoded characters (e.g. &amp;)
-			.replace(/&.+?;/g, " ")
-			// URLs
-			.replace(/[a-z]+:\/\/[^\s]+/g, "")
-			// Any weird characters
-			.replace(/[^a-z ]/g, "")
-			// Any double spaces
-			.replace(/(\s)+/g, " ")
-			// Extra space
-			.trim()
-			// Array
-			.split(" ");
-	}
 
-	var getWordCloud = function() {
+	return function() {
 		var cloud = {};
 
 		arg2arr(arguments).map(function(weightedPair) {
@@ -46,7 +24,5 @@ ig.service("wordcloud", ["arg2arr",
 
 		return cloud;
 	}
-
-	return getWordCloud;
 
 }]);

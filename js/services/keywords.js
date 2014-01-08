@@ -11,7 +11,7 @@ ig.factory("keywords", ["$q", "config", "arg2arr", "fusionTables",
 		var ids = arg2arr(arguments);
 		var promises = [];
 		ids.map(function(id) {
-			promises.push(fusionTables.sql(fusionTables.buildSelect(columns, config.tables.articles, [
+			promises.push(fusionTables.sql(fusionTables.buildSelect(columns, config.tables.keywords, [
 				{ "col": "ROWID", "op": "=", "val": id }
 			])));
 		});
@@ -28,9 +28,14 @@ ig.factory("keywords", ["$q", "config", "arg2arr", "fusionTables",
 		});
 	}
 
+	var createBulk = function(objs) {
+		return fusionTables.bulkUpload(config.tables.keywords, columns.slice(1), objs);
+	}
+
 	return {
 		"get": doGet,
-		"getByArticle": getByArticle
+		"getByArticle": getByArticle,
+		"createBulk": createBulk
 	}
 
 }]);

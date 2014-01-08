@@ -1,5 +1,7 @@
-ig.controller("Admin", ["$http", "$scope", "auth", "wordcloud",
-	function($http, $scope, auth, wordcloud) {
+ig.controller("Admin", ["$http", "$q", "$scope", "auth", "wordcloud", "readTime", "articles", "keywords",
+	function($http, $q, $scope, auth, wordcloud, readTime, articles, keywords) {
+
+	$scope.moment = moment;
 
 	$scope.user = auth.user;
 	$scope.showSignin = false;
@@ -7,13 +9,17 @@ ig.controller("Admin", ["$http", "$scope", "auth", "wordcloud",
 		$scope.showSignin = true;
 		$scope.$apply();
 	});
+	$scope.gotExtraScopes = false;
 	$scope.$on("signedIn", function() {
 		$scope.showSignin = false;
 		$scope.$apply();
+		if (!$scope.gotExtraScopes) {
+			$scope.gotExtraScopes = true;
+			auth.doSignin(["https://www.googleapis.com/auth/fusiontables"]);
+		}
 	});
-	auth.doSignin([
-		"https://www.googleapis.com/auth/fusiontables"
-	]);
+
+	var CHOSEN_TAGS_PER_ARTICLE = 30;
 
 	$scope.userGuid = false;
 	$scope.apiKey = false;
@@ -33,8 +39,14 @@ ig.controller("Admin", ["$http", "$scope", "auth", "wordcloud",
 		});
 	}
 
+	$scope.snapshot = false;
+	$scope.availableDataKeys = false;
+	$scope.keyOutputMapping = {};
+	$scope.articleType = false;
+
+	$scope.readTime = readTime;
+
 	$scope.submitSourceGuid = function(guid) {
-		console.log("Input GUID is", guid);
 		var connector = false;
 		var snapshot = false;
 		var overallCloud = {};
@@ -43,6 +55,7 @@ ig.controller("Admin", ["$http", "$scope", "auth", "wordcloud",
 		var totalArticles = 0;
 		var scoreThreshold = 0;
 		var overlyCommonWords = {};
+		var availableKeys = {};
 		$http({
 			"method": "GET",
 			"url": "https://api.import.io/store/connector/" + guid,
@@ -52,7 +65,6 @@ ig.controller("Admin", ["$http", "$scope", "auth", "wordcloud",
 			}
 		}).then(function(data) {
 			connector = data.data;
-			console.log("Connector data is", connector);
 			return $http({
 				"method": "GET",
 				"url": "https://api.import.io/store/connector/" + connector.guid + "/_attachment/snapshot/" + connector.snapshot,
@@ -63,7 +75,7 @@ ig.controller("Admin", ["$http", "$scope", "auth", "wordcloud",
 			});
 		}).then(function(data) {
 			snapshot = data.data.tiles[0].results[0].pages;
-			console.log("Snapshot is", snapshot);
+
 			snapshot.map(function(page) {
 				var weightedPairs = [];
 				var data = page.results[0];
@@ -94,14 +106,13 @@ ig.controller("Admin", ["$http", "$scope", "auth", "wordcloud",
 			});
 			totalWords = Object.keys(overallCloud).length;
 			scoreThreshold = totalArticles / 2;
-			console.log("Overall word cloud", overallCloud);
-			console.log("Total score/words/threshold", totalScore, totalWords, scoreThreshold);
+
 			for (var k in overallCloud) {
 				if (overallCloud[k] > scoreThreshold) {
 					overlyCommonWords[k] = true;
 				}
 			}
-			console.log("Overly common words", Object.keys(overlyCommonWords));
+
 			var i = snapshot.length;
 			while (i--) {
 				var page = snapshot[i];
@@ -112,18 +123,148 @@ ig.controller("Admin", ["$http", "$scope", "auth", "wordcloud",
 					}
 				}
 
-
-
 				var oldCount = Object.keys(page.wordcloud).length;
 				var newCount = Object.keys(page.reducedWordcloud).length;
 				if (newCount < 10) {
 					snapshot.splice(i, 1);
-					console.log("Removed next for being to small");
+					continue;
 				}
-				console.log("Old vs new", oldCount, newCount, "Retained: " + Math.round((newCount / oldCount)*100) + "%" );
+
+				var weightedWords = [];
+				for (var k in page.reducedWordcloud) {
+					if (page.reducedWordcloud[k] > 1) {
+						weightedWords.push({ "word": k, "score": page.reducedWordcloud[k]});
+					}
+				}
+				weightedWords = weightedWords.sort(function(a, b) {
+					if (a.score > b.score) {
+						return -1;
+					} else if (a.score < b.score) {
+						return 1;
+					} else {
+						return 0;
+					}
+				});
+				if (weightedWords.length < 10) {
+					snapshot.splice(i, 1);
+					continue;
+				}
+				var chosenWords = weightedWords;
+				if (chosenWords.length > CHOSEN_TAGS_PER_ARTICLE) {
+					chosenWords = chosenWords.splice(0, CHOSEN_TAGS_PER_ARTICLE);
+				}
+				var chosenWordCloud = {};
+				chosenWords.map(function(word) {
+					chosenWordCloud[word.word] = word.score;
+				});
+				page.chosenWordCloud = chosenWordCloud;
+
+				for (var k in page.results[0]) {
+					availableKeys[k] = true;
+				}
 			}
-			console.log("Processed snapshot", snapshot);
-		})
+			$scope.snapshot = snapshot;
+			$scope.availableDataKeys = [];
+			for (var k in availableKeys) {
+				$scope.availableDataKeys.push(k);
+			}
+		});
+	}
+
+	$scope.upload = function() {
+		var preparedArticles = {};
+		var preparedArticleSegments = [];
+		var currentSegment = [];
+		var SEGMENT_SIZE = 20;
+
+		$scope.snapshot.map(function(page) {
+			if (currentSegment.length >= SEGMENT_SIZE) {
+				preparedArticleSegments.push(currentSegment);
+				currentSegment = [];
+			}
+			var article = {};
+			article["Link"] = page.pageUrl;
+			article["_tags"] = Object.keys(page.chosenWordCloud);
+			article["Time"] = readTime(page.results[0][$scope.keyOutputMapping["Content"]])
+			article["Type"] = $scope.articleType;
+			["Published", "Title", "Image", "Summary"].map(function(col) {
+				article[col] = page.results[0][$scope.keyOutputMapping[col]];
+			});
+			article["Published"] = moment(article["Published"]).format("YYYY-MM-DD");
+
+			preparedArticles[page.pageUrl] = article;
+			currentSegment.push(article);
+		});
+		if (currentSegment.length) {
+			preparedArticleSegments.push(currentSegment);
+		}
+
+		var waitingFutures = [];
+		preparedArticleSegments.map(function(segment) {
+			var urls = [];
+			segment.map(function(item) {
+				urls.push(item["Link"]);
+			});
+			waitingFutures.push(articles.urls(urls).then(function(data) {
+				data.map(function(foundRow) {
+					delete preparedArticles[foundRow["link"]];
+				});
+			}));
+		});
+		return $q.all(waitingFutures).then(function() {
+			var articleQueue = [];
+			for (var k in preparedArticles) {
+				var article = {};
+				for (var v in preparedArticles[k]) {
+					if (v.indexOf("_") != 0) {
+						if (!preparedArticles[k][v]) {
+							preparedArticles[k][v] = "";
+						}
+						var entry = preparedArticles[k][v];
+						if (entry.replace) {
+							entry = '"' + entry.replace(/"/g, "'") + '"';
+						}
+						article[v] = entry;
+					}
+				}
+				articleQueue.push(article);
+			}
+			return articles.createBulk(articleQueue);
+		}).then(function() {
+			var segments = [];
+			var segment = [];
+			for (var k in preparedArticles) {
+				if (segment.length > SEGMENT_SIZE) {
+					segments.push(segment);
+					segment = [];
+				}
+				segment.push(preparedArticles[k]);
+			}
+			if (segment.length) {
+				segments.push(segment);
+			}
+			var waitingAgainFutures = [];
+			segments.map(function(segment) {
+				var urls = [];
+				segment.map(function(item) {
+					urls.push(item["Link"]);
+				});
+				waitingAgainFutures.push(articles.urls(urls).then(function(data) {
+					data.map(function(foundRow) {
+						preparedArticles[foundRow["link"]]._id = foundRow._id;
+					});
+				}));
+			});
+			return $q.all(waitingAgainFutures);
+		}).then(function() {
+			var keywordQueue = [];
+			for (var k in preparedArticles) {
+				preparedArticles[k]._tags.map(function(tag) {
+					keywordQueue.push({ "ArticleID": preparedArticles[k]._id, "Keyword": tag });
+				});
+			}
+			return keywords.createBulk(keywordQueue);
+		});
 	}
 
 }]);

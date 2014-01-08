@@ -37,6 +37,9 @@ ig.factory("suggestion", ["$q", "articles", "track", "wordcloud", "retriever", "
 			console.log("suggestion", "suggest", "Finding article with minTime, maxTime, genre", minTime, maxTime, genre);
 			return articles.find(minTime, maxTime, genre).then(function(suggestions) {
 				console.log("suggestion", "suggest", suggestions.length, "suggestions found");
+				if (suggestions.length > 150) {
+					suggestions = suggestions.splice(0, 150);
+				}
 				suggestions.map(function(suggestion) {
 					suggestion._keywords = [];
 					suggestion._score = 0;
@@ -47,7 +50,9 @@ ig.factory("suggestion", ["$q", "articles", "track", "wordcloud", "retriever", "
 			}).then(function(keywords) {
 				console.log("suggestion", "suggest", "Found keywords", keywords);
 				keywords.map(function(keyword) {
-					suggestionsById[keyword.articleid]._keywords.push(keyword.keyword);
+					if (suggestionsById.hasOwnProperty(keyword.articleid)) {
+						suggestionsById[keyword.articleid]._keywords.push(keyword.keyword);
+					}
 				});
 				var userTags = tags.get({
 					"number": 5000,

@@ -14,12 +14,12 @@ ig.factory("auth", ["$rootScope", "google", "config", "track",
 	]
 
 	// Trigger the SignIn button to see if we have a user
-	var doSignin = function(scopes) {
+	var doSignin = function(additionalScopes) {
 		google.gapi().then(function(gapi) {
-			gapi.signin.render("signin", {
+			var params = {
 				"clientid": config.clientId,
 				"cookiepolicy": "single_host_origin",
-				"scope": scopes.join(" "),
+				"scope": defaultScopes.concat(additionalScopes).join(" "),
 				"callback": function(data) {
 					if (data.status.signed_in) {
 						authData = data;
@@ -35,10 +35,15 @@ ig.factory("auth", ["$rootScope", "google", "config", "track",
 						$rootScope.$broadcast("showSignin");
 					}
 				}
-			});
+			}
+			if (additionalScopes) {
+				gapi.auth.signIn(params);
+			} else {
+				gapi.signin.render("signin", params);
+			}
 		});
 	}
-	doSignin(defaultScopes);
+	doSignin();
 
 	return {
 		"user": function() {
@@ -47,18 +52,7 @@ ig.factory("auth", ["$rootScope", "google", "config", "track",
 		"showSignin": function() {
 			return showSignin;
 		},
-		"doSignin": function(extraScopes) {
-			var scopes = [];
-			defaultScopes.map(function(scope) {
-				scopes.push(scope);
-			});
-			if (extraScopes) {
-				extraScopes.map(function(scope) {
-					scopes.push(scope);
-				});
-			}
-			doSignin(scopes);
-		}
+		"doSignin": doSignin
 	}
 
 }]);

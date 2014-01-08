@@ -1,20 +1,25 @@
 ig.factory("fusionTables", ["$q", "$http", "google", "config",
 	function($q, $http, google, config) {
     
-	var doSql = function(sql) {
+	var doSql = function(sql, post) {
 		// DERP http://stackoverflow.com/questions/20813123/response-varies-between-fusiontables-http-call-and-call-with-javascript-client-l
 		/*return google.gapi().then(function(gapi) {
 			return google.execute(gapi.client.fusiontables.query.sql({
 				"sql": sql
 			}));
 		});*/
+		var params = {
+			"sql": sql
+		}
+		if (post) {
+			params["access_token"] = gapi.auth.getToken()["access_token"];
+		} else {
+			params.key = config.apiKey;
+		}
 		return $http({
-			"method": "GET",
+			"method": post ? "POST" : "GET",
 			"url": "https://www.googleapis.com/fusiontables/v1/query",
-			"params": {
-				"sql": sql,
-				"key": config.apiKey
-			}
+			"params": params
 		});
 	}
 
@@ -43,9 +48,12 @@ ig.factory("fusionTables", ["$q", "$http", "google", "config",
 
 	var buildSelect = function(columns, table, whereConditions) {
 		var sql = "SELECT " + columns.join(", ") + " from " + table;
-		if (whereConditions) {
+		if (whereConditions && whereConditions.length) {
 			var wheres = [];
 			whereConditions.map(function(where) {
+				if (where.val.join) {
+					where.val = "('" + where.val.join("', '") + "')";
+				}
 				var quote = where.val.match && where.val.match(/'/) ? "" : "'";
 				wheres.push(where.col + " " + where.op + " " + quote + where.val + quote);
 			});
@@ -54,11 +62,53 @@ ig.factory("fusionTables", ["$q", "$http", "google", "config",
 		return sql + ";";
 	}
 
+	var buildInsert = function(table, data) {
+		var values = [];
+		for (var k in data) {
+			values.push("'" + data[k] + "'");
+		}
+		var sql = "INSERT INTO " + table + " (" + Object.keys(data).join(", ") + ") VALUES (" + values.join(", ") + ");";
+		return sql;
+	}
+
+	var bulkUpload = function(table, columns, data) {
+		var csv = "";
+		data.map(function(row) {
+			var entries = [];
+			columns.map(function(col) {
+				if (row.hasOwnProperty(col)) {
+					entries.push(row[col]);
+				} else {
+					entries.push("");
+				}
+			});
+			csv += entries.join(",") + "\n";
+		});
+		if (!csv.length) {
+			return;
+		}
+		return $http({
+			"method": "POST",
+			"url": "https://www.googleapis.com/upload/fusiontables/v1/tables/" + table + "/import",
+			"params": {
+				"access_token": gapi.auth.getToken()["access_token"],
+				"uploadType": "media",
+				"isStrict": false
+			},
+			"headers": {
+				"content-type": "application/octet-stream"
+			},
+			"data": csv
+		});
+	}
+
 	return {
 		"sql": doSql,
 		"mapRow": mapRow,
 		"mapRows": mapRows,
-		"buildSelect": buildSelect
+		"buildSelect": buildSelect,
+		"buildInsert": buildInsert,
+		"bulkUpload": bulkUpload
 	}
     
 }]);

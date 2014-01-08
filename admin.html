@@ -35,6 +35,62 @@
 		</form>
 	</div>
 
+	<div ng-show="snapshot">
+		<p><button ng-click="upload()">Upload Data</button></p>
+		<p>Snapshot acquired and processed</p>
+		<p>Type:
+			<select ng-model="articleType">
+				<option>Random</option>
+				<option>Factual</option>
+				<option>News</option>
+				<option>Fun</option>
+			</select>
+		</p>
+		<p>Content:
+			<select ng-model="keyOutputMapping['Content']" ng-options="value for value in availableDataKeys"></select>
+		</p>
+		<table style="font-size: 12px">
+			<thead>
+				<tr>
+					<th>Link</th>
+					<th>
+						<p>Published</p>
+						<select ng-model="keyOutputMapping['Published']" ng-options="value for value in availableDataKeys"></select>
+					</th>
+					<th>
+						<p>Title</p>
+						<select ng-model="keyOutputMapping['Title']" ng-options="value for value in availableDataKeys"></select>
+					</th>
+					<th>
+						<p>Summary</p>
+						<select ng-model="keyOutputMapping['Summary']" ng-options="value for value in availableDataKeys"></select>
+					</th>
+					<th>
+						<p>Image</p>
+						<select ng-model="keyOutputMapping['Image']" ng-options="value for value in availableDataKeys"></select>
+					</th>
+					<th>Time</th>
+					<th>Tags</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="row in snapshot">
+					<td><a href="{{row.pageUrl}}" target="_blank">{{row.pageUrl}}</a></td>
+					<td>{{moment(row.results[0][keyOutputMapping["Published"]]).format("YYYY-MM-DD")}}</td>
+					<td>{{row.results[0][keyOutputMapping["Title"]]}}</td>
+					<td>{{row.results[0][keyOutputMapping["Summary"]]}}</td>
+					<td>
+						<a href="{{row.results[0][keyOutputMapping['Image']]}}" target="_blank">{{row.results[0][keyOutputMapping['Image']]}}</a>
+					</td>
+					<td>{{readTime(row.results[0][keyOutputMapping["Content"]])}}</td>
+					<td>
+						<span ng-repeat="(word, score) in row.chosenWordCloud"><strong>{{word}}</strong> ({{score}}) - </span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.6/angular.min.js"></script>
 	<script src="js/gclient.js"></script>
@@ -50,6 +106,8 @@
 	<script src="js/services/track.js"></script>
 	<script src="js/services/fusiontables.js"></script>
 	<script src="js/services/wordcloud.js"></script>
+	<script src="js/services/readTime.js"></script>
+	<script src="js/services/textToWords.js"></script>
 	<script src="js/services/articles.js"></script>
 	<script src="js/services/keywords.js"></script>
 	<script src="js/services/suggestion.js"></script>

@@ -40,9 +40,27 @@ ig.factory("articles", ["$q", "config", "arg2arr", "fusionTables",
 		});
 	}
 
+	var findByUrl = function(urls) {
+		var conditions = [{ "col": "Link", "op": "IN", "val": urls }];
+		return fusionTables.sql(fusionTables.buildSelect(columns, config.tables.articles, conditions)).then(function(data) {
+			return fusionTables.mapRows(data.data);
+		});
+	}
+
+	var create = function(obj) {
+		return fusionTables.sql(fusionTables.buildInsert(config.tables.articles, obj), true);
+	}
+
+	var createBulk = function(objs) {
+		return fusionTables.bulkUpload(config.tables.articles, columns.slice(1), objs);
+	}
+
 	return {
 		"get": doGet,
-		"find": doFind
+		"find": doFind,
+		"urls": findByUrl,
+		"create": create,
+		"createBulk": createBulk
 	}
 
 }]);

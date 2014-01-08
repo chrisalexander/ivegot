@@ -102,10 +102,10 @@ ig.controller("Ig", ["$scope", "$timeout", "config", "fusionTables", "auth", "su
 
 	$scope.getReadTime = function(seconds) {
 		if (seconds < 60) {
-			return "1 minute";
+			return "1 min";
 		} else if (seconds < 60*60) {
 			var minutes = Math.round(seconds/60);
-			return minutes + " minute" + (minutes > 1 ? "s" : "");
+			return minutes + " min" + (minutes > 1 ? "s" : "");
 		} else {
 			var hours = Math.round(seconds/(60*60));
 			return hours + " hour" + (hours > 1 ? "s" : "");
